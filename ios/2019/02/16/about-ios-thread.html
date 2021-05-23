@@ -254,7 +254,21 @@
 <span class="p">}</span>
 </code></pre></div></div>
 
-<p>点击添加任务就可以看到线程执行反馈的消息了，变量命名有点随意，大家不喜勿喷</p>
+<p>点击添加任务就可以看到线程执行反馈的消息了，变量命名有点随意，大家不喜勿喷
+添加任务</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">@IBAction</span> <span class="kd">func</span> <span class="nf">onBtn2Click</span><span class="p">(</span><span class="n">_</span> <span class="nv">sender</span><span class="p">:</span> <span class="kt">Any</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">threadObj</span> <span class="o">=</span> <span class="kt">XSThread</span><span class="o">.</span><span class="kd">init</span> <span class="p">{</span> <span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">in</span>
+            <span class="c1">// TODO do something before thread task run</span>
+        <span class="p">}</span> <span class="nv">willCompleteCallback</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">in</span>
+            <span class="c1">// TODO do something before task complete</span>
+            <span class="nf">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+        <span class="p">}</span> <span class="nv">messageCallback</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nv">msgs</span><span class="p">:[</span><span class="kt">String</span><span class="p">])</span> <span class="k">in</span>
+            <span class="c1">// TODO do something after task complete</span>
+        <span class="p">}</span>
+        <span class="kt">ThreadManager</span><span class="o">.</span><span class="n">shareInstance</span><span class="o">.</span><span class="nf">add</span><span class="p">(</span><span class="nv">task</span><span class="p">:</span> <span class="n">threadObj</span><span class="p">)</span>
+    <span class="p">}</span>
+</code></pre></div></div>
 
 <h4 id="demo已上传到github点击查看-demo">Demo已上传到Github，点击查看 <a href="https://github.com/waterhxs/aboutThreadCountChange">Demo</a></h4>
 
