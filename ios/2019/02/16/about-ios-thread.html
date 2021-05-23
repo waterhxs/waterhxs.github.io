@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>iOS设计一个线程池 | 牛杂</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="iOS设计一个线程池" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="今天，群里的一个兄弟提出一个需求，想要设计一个线程池，这个线程池呢在任务量在某个阀值之下的时候，线程数目时1，任务数量超过阀值之后呢，线程数量是5，一个面试题，有点意思。" />
+<meta property="og:description" content="今天，群里的一个兄弟提出一个需求，想要设计一个线程池，这个线程池呢在任务量在某个阀值之下的时候，线程数目时1，任务数量超过阀值之后呢，线程数量是5，一个面试题，有点意思。" />
+<link rel="canonical" href="/ios/2019/02/16/about-ios-thread.html" />
+<meta property="og:url" content="/ios/2019/02/16/about-ios-thread.html" />
+<meta property="og:site_name" content="牛杂" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-02-16T20:34:19+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="iOS设计一个线程池" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"/ios/2019/02/16/about-ios-thread.html"},"url":"/ios/2019/02/16/about-ios-thread.html","headline":"iOS设计一个线程池","dateModified":"2019-02-16T20:34:19+08:00","datePublished":"2019-02-16T20:34:19+08:00","description":"今天，群里的一个兄弟提出一个需求，想要设计一个线程池，这个线程池呢在任务量在某个阀值之下的时候，线程数目时1，任务数量超过阀值之后呢，线程数量是5，一个面试题，有点意思。","@type":"BlogPosting","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="牛杂" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">牛杂</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">iOS设计一个线程池</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2019-02-16T20:34:19+08:00" itemprop="datePublished">Feb 16, 2019
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>今天，群里的一个兄弟提出一个需求，想要设计一个线程池，这个线程池呢在任务量在某个阀值之下的时候，线程数目时1，任务数量超过阀值之后呢，线程数量是5，一个面试题，有点意思。</p>
+
+<p>首先想到的就是GCD，<code class="language-plaintext highlighter-rouge">dispatch_semaphore</code> 可以控制并行的线程数量，但是semaphore无法在线程进行中变更信号量上限。</p>
+
+<p>其次就是<code class="language-plaintext highlighter-rouge">NSThread</code>了，更具体也更直观，就用它吧。</p>
+
+<p>思路如下：
+线程池用的是单例管理，有个线程队列，每次执行线程的是后线程执行数量+1，执行完毕之后-1，当然这两步操作得加锁，然后涉及到任务量的逻辑，即阀值关联线程量的逻辑，逻辑计算中用到的变量也要加锁处理，最后队列用<code class="language-plaintext highlighter-rouge">protocol</code>范型来处理，便于后期扩展其他类型的线程任务，OK，不错，来直接看代码吧</p>
+
+<p>首先是 <code class="language-plaintext highlighter-rouge">XSThreadProtocol</code></p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">Foundation</span>
+
+<span class="kd">protocol</span> <span class="kt">XSThreadProtocol</span> <span class="p">{</span>
+    <span class="k">var</span> <span class="nv">willRunCallback</span><span class="p">:</span> <span class="n">threadActionCallback</span> <span class="p">{</span><span class="k">set</span> <span class="k">get</span><span class="p">}</span>
+    <span class="k">var</span> <span class="nv">completeCallback</span><span class="p">:</span> <span class="n">threadActionForMessageCallback</span> <span class="p">{</span><span class="k">set</span> <span class="k">get</span><span class="p">}</span>
+    <span class="kd">func</span> <span class="nf">run</span><span class="p">()</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>接着是队列 <code class="language-plaintext highlighter-rouge">XSThreadQueue</code></p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">Foundation</span>
+
+<span class="kd">public</span> <span class="kd">struct</span> <span class="kt">XSThreadQueue</span><span class="o">&lt;</span><span class="kt">T</span><span class="o">&gt;</span> <span class="p">{</span>
+    
+    <span class="kd">fileprivate</span> <span class="k">var</span> <span class="nv">queue</span> <span class="o">=</span> <span class="p">[</span><span class="kt">T</span><span class="p">]()</span>
+    
+    <span class="kd">public</span> <span class="k">var</span> <span class="nv">isEmpty</span><span class="p">:</span><span class="kt">Bool</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">queue</span><span class="o">.</span><span class="n">isEmpty</span>
+    <span class="p">}</span>
+    
+    <span class="kd">public</span> <span class="k">var</span> <span class="nv">count</span><span class="p">:</span><span class="kt">Int</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">queue</span><span class="o">.</span><span class="n">count</span>
+    <span class="p">}</span>
+    
+    <span class="kd">public</span> <span class="k">mutating</span> <span class="kd">func</span> <span class="nf">enQueue</span><span class="p">(</span><span class="n">_</span> <span class="nv">element</span><span class="p">:</span><span class="kt">T</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">queue</span><span class="o">.</span><span class="nf">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+    <span class="p">}</span>
+    
+    <span class="kd">public</span> <span class="k">mutating</span> <span class="kd">func</span> <span class="nf">removeFirst</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="o">!</span><span class="n">isEmpty</span> <span class="p">{</span>
+            <span class="n">queue</span><span class="o">.</span><span class="nf">removeFirst</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    
+    <span class="kd">public</span> <span class="k">mutating</span> <span class="kd">func</span> <span class="nf">deQueue</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">T</span><span class="p">?</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="n">isEmpty</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">queue</span><span class="o">.</span><span class="nf">removeFirst</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    
+    <span class="kd">public</span> <span class="k">var</span> <span class="nv">front</span><span class="p">:</span><span class="kt">T</span><span class="p">?</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">queue</span><span class="o">.</span><span class="n">first</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>再来是线程 <code class="language-plaintext highlighter-rouge">XSThread</code></p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kd">import</span> <span class="kt">UIKit</span>
+
+<span class="kd">typealias</span> <span class="n">threadActionCallback</span> <span class="o">=</span> <span class="p">(</span><span class="n">_</span> <span class="nv">t</span><span class="p">:</span><span class="kt">Thread</span><span class="p">)</span><span class="o">-&gt;</span><span class="p">()</span>
+<span class="kd">typealias</span> <span class="n">threadActionForMessageCallback</span> <span class="o">=</span> <span class="p">(</span><span class="n">_</span> <span class="nv">t</span><span class="p">:</span><span class="kt">Thread</span><span class="p">,</span> <span class="n">_</span> <span class="nv">messages</span><span class="p">:</span><span class="k">inout</span> <span class="p">[</span><span class="kt">String</span><span class="p">])</span><span class="o">-&gt;</span><span class="p">()</span>
+<span class="kd">typealias</span> <span class="n">threadActionForMessageOutPutCallback</span> <span class="o">=</span> <span class="p">(</span><span class="n">_</span> <span class="nv">t</span><span class="p">:</span><span class="kt">Thread</span><span class="p">,</span> <span class="n">_</span> <span class="nv">messages</span><span class="p">:[</span><span class="kt">String</span><span class="p">])</span><span class="o">-&gt;</span><span class="p">()</span>
+
+<span class="kd">class</span> <span class="kt">XSThread</span><span class="p">:</span> <span class="kt">NSObject</span> <span class="p">{</span>
+    
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">thread</span><span class="p">:</span><span class="kt">Thread</span><span class="p">?</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">_willRunCallback</span><span class="p">:</span><span class="n">threadActionCallback</span><span class="p">?</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">runCallback</span><span class="p">:</span><span class="n">threadActionCallback</span><span class="p">?</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">willCompleteCallback</span><span class="p">:</span><span class="n">threadActionCallback</span><span class="p">?</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">_completeCallback</span><span class="p">:</span><span class="n">threadActionForMessageCallback</span><span class="p">?</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">_messageCallback</span><span class="p">:</span><span class="n">threadActionForMessageOutPutCallback</span><span class="p">?</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">messages</span><span class="p">:[</span><span class="kt">String</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">override</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">super</span><span class="o">.</span><span class="nf">init</span><span class="p">()</span>
+        <span class="nf">setup</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+    <span class="nf">init</span><span class="p">(</span><span class="nv">runCallback</span><span class="p">:</span><span class="kd">@escaping</span><span class="p">(</span><span class="n">threadActionCallback</span><span class="p">),</span>
+         <span class="nv">willCompleteCallback</span><span class="p">:</span><span class="kd">@escaping</span><span class="p">(</span><span class="n">threadActionCallback</span><span class="p">),</span>
+         <span class="nv">messageCallback</span><span class="p">:</span><span class="kd">@escaping</span><span class="p">(</span><span class="n">threadActionForMessageOutPutCallback</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">super</span><span class="o">.</span><span class="nf">init</span><span class="p">()</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">runCallback</span> <span class="o">=</span> <span class="n">runCallback</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">willCompleteCallback</span> <span class="o">=</span> <span class="n">willCompleteCallback</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">_messageCallback</span> <span class="o">=</span> <span class="n">messageCallback</span>
+        <span class="nf">setup</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+    <span class="kd">private</span> <span class="kd">func</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">thread</span> <span class="o">=</span> <span class="kt">Thread</span><span class="o">.</span><span class="nf">init</span><span class="p">(</span><span class="nv">target</span><span class="p">:</span> <span class="k">self</span><span class="p">,</span> <span class="nv">selector</span><span class="p">:</span> <span class="kd">#selector(</span><span class="nf">onThreadAction(_:)</span><span class="kd">)</span><span class="p">,</span> <span class="nv">object</span><span class="p">:</span> <span class="kc">nil</span><span class="p">)</span>
+    <span class="p">}</span>
+    
+    <span class="kd">@IBAction</span> <span class="kd">private</span> <span class="kd">func</span> <span class="nf">onThreadAction</span><span class="p">(</span><span class="n">_</span> <span class="nv">sender</span><span class="p">:</span><span class="kt">Any</span><span class="p">){</span>
+        <span class="nf">_willRunCallback</span><span class="o">!</span><span class="p">(</span><span class="n">thread</span><span class="o">!</span><span class="p">)</span>
+        <span class="nf">runCallback</span><span class="o">!</span><span class="p">(</span><span class="n">thread</span><span class="o">!</span><span class="p">)</span>
+        <span class="nf">willCompleteCallback</span><span class="o">!</span><span class="p">(</span><span class="n">thread</span><span class="o">!</span><span class="p">)</span>
+        <span class="nf">_completeCallback</span><span class="o">!</span><span class="p">(</span><span class="n">thread</span><span class="o">!</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">messages</span><span class="p">)</span>
+        <span class="nf">_messageCallback</span><span class="o">!</span><span class="p">(</span><span class="n">thread</span><span class="o">!</span><span class="p">,</span> <span class="n">messages</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">extension</span> <span class="kt">XSThread</span><span class="p">:</span> <span class="kt">XSThreadProtocol</span> <span class="p">{</span>
+    
+    <span class="k">var</span> <span class="nv">willRunCallback</span><span class="p">:</span> <span class="n">threadActionCallback</span> <span class="p">{</span>
+        <span class="k">get</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_willRunCallback</span><span class="o">!</span>
+        <span class="p">}</span>
+        <span class="k">set</span> <span class="p">{</span>
+            <span class="n">_willRunCallback</span> <span class="o">=</span> <span class="n">newValue</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    
+    <span class="k">var</span> <span class="nv">completeCallback</span><span class="p">:</span> <span class="n">threadActionForMessageCallback</span> <span class="p">{</span>
+        <span class="k">get</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_completeCallback</span><span class="o">!</span>
+        <span class="p">}</span>
+        <span class="k">set</span> <span class="p">{</span>
+            <span class="n">_completeCallback</span> <span class="o">=</span> <span class="n">newValue</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    
+    <span class="kd">func</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">thread</span><span class="o">!.</span><span class="nf">start</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>最后就是主角线程管理单例类了 <code class="language-plaintext highlighter-rouge">ThreadManager</code></p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">UIKit</span>
+
+<span class="kd">class</span> <span class="kt">ThreadManager</span><span class="p">:</span> <span class="kt">NSObject</span> <span class="p">{</span>
+    
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">queue</span><span class="p">:</span><span class="kt">XSThreadQueue</span><span class="o">&lt;</span><span class="kt">XSThreadProtocol</span><span class="o">&gt;</span> <span class="o">=</span> <span class="kt">XSThreadQueue</span><span class="o">&lt;</span><span class="kt">XSThreadProtocol</span><span class="o">&gt;.</span><span class="nf">init</span><span class="p">()</span>
+    <span class="c1">// 线程池任务可超频的数量</span>
+    <span class="kd">private</span> <span class="k">let</span> <span class="nv">queueFlowTaskCount</span><span class="p">:</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="c1">// 线程池超频工作线程数量</span>
+    <span class="kd">private</span> <span class="k">let</span> <span class="nv">flowCount</span><span class="p">:</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="c1">// 线程池稳定工作线程数量</span>
+    <span class="kd">private</span> <span class="k">let</span> <span class="nv">stableCount</span><span class="p">:</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="c1">// 现在线程池的线程数量</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">currThreadCountInPool</span><span class="p">:</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="kd">static</span> <span class="k">let</span> <span class="nv">shareInstance</span><span class="p">:</span><span class="kt">ThreadManager</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">instance</span> <span class="o">=</span> <span class="kt">ThreadManager</span><span class="o">.</span><span class="nf">init</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">instance</span>
+    <span class="p">}()</span>
+    
+    <span class="kd">public</span> <span class="kd">func</span> <span class="nf">add</span><span class="p">(</span><span class="nv">task</span><span class="p">:</span><span class="kt">XSThreadProtocol</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">queue</span><span class="o">.</span><span class="nf">enQueue</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="nf">processTask</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+    <span class="kd">private</span> <span class="kd">func</span> <span class="nf">processTask</span><span class="p">(){</span>
+        
+        <span class="k">var</span> <span class="nv">couldCreateThreadCount</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1">// 来个锁</span>
+        <span class="k">let</span> <span class="nv">l</span> <span class="o">=</span> <span class="kt">NSConditionLock</span><span class="o">.</span><span class="nf">init</span><span class="p">()</span>
+        <span class="c1">// 加锁取数量</span>
+        <span class="n">l</span><span class="o">.</span><span class="nf">lock</span><span class="p">()</span>
+        <span class="n">couldCreateThreadCount</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">count</span> <span class="o">-</span> <span class="n">currThreadCountInPool</span>
+        <span class="c1">// 如果线程队列数量大于超频阀值</span>
+        <span class="k">if</span> <span class="n">queue</span><span class="o">.</span><span class="n">count</span> <span class="o">&gt;</span> <span class="n">queueFlowTaskCount</span> <span class="p">{</span>
+            <span class="n">couldCreateThreadCount</span> <span class="o">=</span> <span class="n">flowCount</span> <span class="o">-</span> <span class="n">currThreadCountInPool</span>
+        <span class="p">}</span>
+        <span class="k">else</span><span class="p">{</span>
+            <span class="n">couldCreateThreadCount</span> <span class="o">=</span> <span class="n">stableCount</span> <span class="o">-</span> <span class="n">currThreadCountInPool</span>
+        <span class="p">}</span>
+        <span class="c1">// 取完数量解锁</span>
+        <span class="n">l</span><span class="o">.</span><span class="nf">unlock</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">queue</span><span class="o">.</span><span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">couldCreateThreadCount</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="k">var</span> <span class="nv">task</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="nf">deQueue</span><span class="p">()</span>
+            <span class="n">task</span><span class="p">?</span><span class="o">.</span><span class="n">willRunCallback</span> <span class="o">=</span> <span class="p">{</span> <span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">in</span>
+                <span class="k">self</span><span class="o">.</span><span class="n">currThreadCountInPool</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="p">}</span>
+            <span class="n">task</span><span class="p">?</span><span class="o">.</span><span class="n">completeCallback</span> <span class="o">=</span> <span class="p">{</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nv">msgs</span><span class="p">:</span><span class="k">inout</span> <span class="p">[</span><span class="kt">String</span><span class="p">])</span> <span class="k">in</span>
+                <span class="c1">// 来个锁</span>
+                <span class="k">let</span> <span class="nv">lock</span> <span class="o">=</span> <span class="kt">NSConditionLock</span><span class="o">.</span><span class="nf">init</span><span class="p">()</span>
+                <span class="c1">// 加锁改数量</span>
+                <span class="n">lock</span><span class="o">.</span><span class="nf">lock</span><span class="p">()</span>
+                <span class="k">self</span><span class="o">.</span><span class="n">currThreadCountInPool</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">msgs</span><span class="o">.</span><span class="nf">append</span><span class="p">(</span><span class="s">"线程执行完毕"</span><span class="p">)</span>
+                <span class="n">msgs</span><span class="o">.</span><span class="nf">append</span><span class="p">(</span><span class="s">"执行完成后待执行线程池里的线程数量是:</span><span class="se">\(</span><span class="k">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">count</span><span class="se">)</span><span class="s">"</span><span class="p">)</span>
+                <span class="n">msgs</span><span class="o">.</span><span class="nf">append</span><span class="p">(</span><span class="s">"执行完成后执行中的线程数量是:</span><span class="se">\(</span><span class="k">self</span><span class="o">.</span><span class="n">currThreadCountInPool</span><span class="se">)</span><span class="s">"</span><span class="p">)</span>
+                <span class="c1">// 改完数量解锁</span>
+                <span class="n">lock</span><span class="o">.</span><span class="nf">unlock</span><span class="p">()</span>
+                <span class="c1">// 执行完毕再递归检测线程池的操作</span>
+                <span class="k">self</span><span class="o">.</span><span class="nf">processTask</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">task</span><span class="p">?</span><span class="o">.</span><span class="nf">run</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>点击添加任务就可以看到线程执行反馈的消息了，变量命名有点随意，大家不喜勿喷</p>
+
+<p>####Demo已上传到Github，点击查看 <a href="https://github.com/waterhxs/aboutThreadCountChange">Demo</a></p>
+
+
+  </div><a class="u-url" href="/ios/2019/02/16/about-ios-thread.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">牛杂</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">牛杂</li><li><a class="u-email" href="mailto:waterh_xs@163.com">waterh_xs@163.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/waterhxs"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">waterhxs</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>肥牛的杂录，世界那么大，我想去看看。</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

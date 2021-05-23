@@ -1,0 +1,8 @@
+_Store
+
+*.DS_Store
+
+_posts/*
+
+_posts/2021-03-10-clang-plugin.markdown
+_posts/2019-02-16-about-optimization.markdown
