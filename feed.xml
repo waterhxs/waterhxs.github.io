@@ -1,30 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2021-05-23T20:42:58+08:00</updated><id>/feed.xml</id><title type="html">牛杂</title><subtitle>肥牛的杂录，世界那么大，我想去看看。</subtitle><entry><title type="html">编译clang插件来进行语法检查和部分错误检查</title><link href="/ios/2021/03/10/clang-plugin.html" rel="alternate" type="text/html" title="编译clang插件来进行语法检查和部分错误检查" /><published>2021-03-10T22:10:38+08:00</published><updated>2021-03-10T22:10:38+08:00</updated><id>/ios/2021/03/10/clang-plugin</id><content type="html" xml:base="/ios/2021/03/10/clang-plugin.html">&lt;p&gt;最近都是在处理需求，突然想整点新鲜玩意，用clang来做些语法检查，调用函数的检查，早就想做了，一直比较懒，今天来整一整&lt;/p&gt;
-
-&lt;p&gt;#####目标：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;类命名-驼峰式命名（首字母大写）&amp;lt;/br&amp;gt;&lt;/li&gt;
-  &lt;li&gt;函数和成员命名-驼峰式命名（首字母小写）&amp;lt;/br&amp;gt;&lt;/li&gt;
-  &lt;li&gt;常量的命名-全是大写 &amp;lt;/br&amp;gt;
-&amp;lt;/br&amp;gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#####从一些资料了解到，clang为一些需要分析代码语法，语意信息的工具提供了基础设施，这些基础设施是：&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;LibClang&lt;/li&gt;
-  &lt;li&gt;Clang Plugin&lt;/li&gt;
-  &lt;li&gt;LibTooling&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#####LibClang:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;优点：提供了稳定的高级C接口，而且API很稳定，Clang版本更新对其影响不大&lt;/li&gt;
-  &lt;li&gt;缺点：不能完全访问到Clang的AST信息&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;因为人手原因，LibClang这个优点确实就是我想要的，不会因为Clang版本更新而去做太多变更，而且较少的改动到Clang&lt;/p&gt;
-
-&lt;p&gt;#####构建的第一步：&lt;/p&gt;</content><author><name></name></author><category term="iOS" /><summary type="html">最近都是在处理需求，突然想整点新鲜玩意，用clang来做些语法检查，调用函数的检查，早就想做了，一直比较懒，今天来整一整</summary></entry><entry><title type="html">Mac系统Android下载的ndk提示 无法打开xxxx 因为无法验证开发者 的问题及解决</title><link href="/android/2020/10/09/android-ndk-could-not-openxxx.html" rel="alternate" type="text/html" title="Mac系统Android下载的ndk提示 无法打开xxxx 因为无法验证开发者 的问题及解决" /><published>2020-10-09T20:18:01+08:00</published><updated>2020-10-09T20:18:01+08:00</updated><id>/android/2020/10/09/android-ndk-could-not-openxxx</id><content type="html" xml:base="/android/2020/10/09/android-ndk-could-not-openxxx.html">&lt;p&gt;上午因为一个小问题，捣鼓了大半小时，有点懵逼的问题，记录一下，整个经过大致是这样的，因为项目使用了 &lt;strong&gt;&lt;a href=&quot;https://github.com/szad670401/HyperLPR&quot;&gt;HyperLPR&lt;/a&gt;&lt;/strong&gt; ，Android的配置需要降低 &lt;strong&gt;NDK&lt;/strong&gt; 降到 &lt;strong&gt;R14&lt;/strong&gt; ，下载下来之后编译的时候弹出各种框提示 &lt;strong&gt;无法打开clang 因为无法验证开发者&lt;/strong&gt; ，折腾半天，最后解决方案如下：&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2021-05-23T20:52:12+08:00</updated><id>/feed.xml</id><title type="html">牛杂</title><subtitle>肥牛的杂录，世界那么大，我想去看看。</subtitle><entry><title type="html">Mac系统Android下载的ndk提示 无法打开xxxx 因为无法验证开发者 的问题及解决</title><link href="/android/2020/10/09/android-ndk-could-not-openxxx.html" rel="alternate" type="text/html" title="Mac系统Android下载的ndk提示 无法打开xxxx 因为无法验证开发者 的问题及解决" /><published>2020-10-09T20:18:01+08:00</published><updated>2020-10-09T20:18:01+08:00</updated><id>/android/2020/10/09/android-ndk-could-not-openxxx</id><content type="html" xml:base="/android/2020/10/09/android-ndk-could-not-openxxx.html">&lt;p&gt;上午因为一个小问题，捣鼓了大半小时，有点懵逼的问题，记录一下，整个经过大致是这样的，因为项目使用了 &lt;strong&gt;&lt;a href=&quot;https://github.com/szad670401/HyperLPR&quot;&gt;HyperLPR&lt;/a&gt;&lt;/strong&gt; ，Android的配置需要降低 &lt;strong&gt;NDK&lt;/strong&gt; 降到 &lt;strong&gt;R14&lt;/strong&gt; ，下载下来之后编译的时候弹出各种框提示 &lt;strong&gt;无法打开clang 因为无法验证开发者&lt;/strong&gt; ，折腾半天，最后解决方案如下：&lt;/p&gt;
 
 &lt;ul&gt;
   &lt;li&gt;使用搜索功能，搜索 &lt;strong&gt;ndk&lt;/strong&gt; 目录，精确匹配提示无法打开的文件名，例如上面的提示就搜索 &lt;strong&gt;clang&lt;/strong&gt;&lt;/li&gt;
@@ -274,26 +248,7 @@
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;gem&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;usr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;bin&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cocoapods&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;即可&lt;/p&gt;</content><author><name></name></author><category term="iOS" /><summary type="html">上午在更新CocoaPods时发现个问题，</summary></entry><entry><title type="html">关于iOS扫图识别车牌的卡顿问题</title><link href="/ios/2019/02/16/about-optimization.html" rel="alternate" type="text/html" title="关于iOS扫图识别车牌的卡顿问题" /><published>2019-02-16T20:34:19+08:00</published><updated>2019-02-16T20:34:19+08:00</updated><id>/ios/2019/02/16/about-optimization</id><content type="html" xml:base="/ios/2019/02/16/about-optimization.html">&lt;p&gt;今天，黑盒完成了一个通过图片识别车牌的一个功能，使用的是 &lt;a href=&quot;https://github.com/szad670401/HyperLPR&quot;&gt;HyperLPR&lt;/a&gt;，比较不容易，特别是Android端，降级了ndk来嵌入，后期考虑参考它重新写一个非降级ndk的，要不放到Jenkins就比较头痛，改Jenkins的ndk，其他项目就用不了&lt;/p&gt;
-
-&lt;p&gt;然而这篇的重点不是Android，是说说关于iOS卡顿的问题，因为在处理iOS识别车牌的时候，cpu占用率特别的高，iPhone11的真机cpu居然占用高达300%，有点吓人，具体用的时候，还特别容易发烫（测试阶段没留意……），开始来处理这个问题。&lt;/p&gt;
-
-&lt;p&gt;1、先打开TimeProfile看看具体是哪个线程耗时比较久。
-果不其然，函数&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;simpleRecognition&lt;/code&gt;内存占用率24%，这个函数是封装了&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HyperLPR&lt;/code&gt;的具体识别函数，打个电话找找它，&lt;/p&gt;
-
-&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;YEAR-MONTH-DAY-title.MARKUP&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;Where &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;YEAR&lt;/code&gt; is a four-digit number, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MONTH&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DAY&lt;/code&gt; are both two-digit numbers, and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MARKUP&lt;/code&gt; is the file extension representing the format used in the file. After that, include the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/p&gt;
-
-&lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hi, &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Tom'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; prints 'Hi, Tom' to STDOUT.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Check out the &lt;a href=&quot;https://jekyllrb.com/docs/home&quot;&gt;Jekyll docs&lt;/a&gt; for more info on how to get the most out of Jekyll. File all bugs/feature requests at &lt;a href=&quot;https://github.com/jekyll/jekyll&quot;&gt;Jekyll’s GitHub repo&lt;/a&gt;. If you have questions, you can ask them on &lt;a href=&quot;https://talk.jekyllrb.com/&quot;&gt;Jekyll Talk&lt;/a&gt;.&lt;/p&gt;</content><author><name></name></author><category term="iOS" /><summary type="html">今天，黑盒完成了一个通过图片识别车牌的一个功能，使用的是 HyperLPR，比较不容易，特别是Android端，降级了ndk来嵌入，后期考虑参考它重新写一个非降级ndk的，要不放到Jenkins就比较头痛，改Jenkins的ndk，其他项目就用不了</summary></entry><entry><title type="html">iOS设计一个线程池</title><link href="/ios/2019/02/16/about-ios-thread.html" rel="alternate" type="text/html" title="iOS设计一个线程池" /><published>2019-02-16T20:34:19+08:00</published><updated>2019-02-16T20:34:19+08:00</updated><id>/ios/2019/02/16/about-ios-thread</id><content type="html" xml:base="/ios/2019/02/16/about-ios-thread.html">&lt;p&gt;今天，群里的一个兄弟提出一个需求，想要设计一个线程池，这个线程池呢在任务量在某个阀值之下的时候，线程数目时1，任务数量超过阀值之后呢，线程数量是5，一个面试题，有点意思。&lt;/p&gt;
+&lt;p&gt;即可&lt;/p&gt;</content><author><name></name></author><category term="iOS" /><summary type="html">上午在更新CocoaPods时发现个问题，</summary></entry><entry><title type="html">iOS设计一个线程池</title><link href="/ios/2019/02/16/about-ios-thread.html" rel="alternate" type="text/html" title="iOS设计一个线程池" /><published>2019-02-16T20:34:19+08:00</published><updated>2019-02-16T20:34:19+08:00</updated><id>/ios/2019/02/16/about-ios-thread</id><content type="html" xml:base="/ios/2019/02/16/about-ios-thread.html">&lt;p&gt;今天，群里的一个兄弟提出一个需求，想要设计一个线程池，这个线程池呢在任务量在某个阀值之下的时候，线程数目时1，任务数量超过阀值之后呢，线程数量是5，一个面试题，有点意思。&lt;/p&gt;
 
 &lt;p&gt;首先想到的就是GCD，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dispatch_semaphore&lt;/code&gt; 可以控制并行的线程数量，但是semaphore无法在线程进行中变更信号量上限。&lt;/p&gt;
 
